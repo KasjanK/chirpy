@@ -1,15 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"sync/atomic"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
 }
+
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,14 +26,16 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerReqCount(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
 	reqCount := &cfg.fileserverHits
-	w.Write([]byte("Hits: " + strconv.Itoa(int(reqCount.Load()))))
+	w.Write([]byte(fmt.Sprintf("Hits: %d", reqCount.Load())))
 }
 
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
 	cfg.fileserverHits.Store(0)	
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hits reset to 0"))
 }
 
 func main() {
@@ -42,11 +45,14 @@ func main() {
 		Addr: ":8080",
 	}
 
-	apiCfg := &apiConfig{}
+	apiCfg := apiConfig{
+		fileserverHits: atomic.Int32{},
+	}
 
 	serveMux.Handle("/app/", http.StripPrefix("/app", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
-	serveMux.HandleFunc("/metrics", apiCfg.handlerReqCount)
-	serveMux.HandleFunc("/healthz", handlerReadiness)
-	serveMux.HandleFunc("/reset", apiCfg.handlerReset)
+	serveMux.HandleFunc("GET /metrics", apiCfg.handlerReqCount)
+	serveMux.HandleFunc("GET /healthz", handlerReadiness)
+	serveMux.HandleFunc("POST /reset", apiCfg.handlerReset)
+
 	log.Fatal(server.ListenAndServe())
 }
