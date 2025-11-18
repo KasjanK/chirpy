@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
+	"strings"
 	"sync/atomic"
 )
 
@@ -77,7 +79,7 @@ func (cfg *apiConfig) handlerValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -92,10 +94,23 @@ func (cfg *apiConfig) handlerValidate(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
-	
+
+	cleanBody := replaceProfanities(params.Body)
 	respondWithJSON(w, http.StatusOK, returnVals{
-		Valid: true,
+		CleanedBody: cleanBody,
 	})
+}
+
+func replaceProfanities(text string) string {
+	profanities := []string{"kerfuffle", "sharbert", "fornax"}
+	words := strings.Split(text, " ")
+	for i, word := range words {
+		lowerWord := strings.ToLower(word)
+		if slices.Contains(profanities, lowerWord) {
+			words[i] = "****"	
+		}	
+	}
+	return strings.Join(words, " ")
 }
 
 func main() {
