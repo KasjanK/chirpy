@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"slices"
-	"strings"
 )
 
 func (cfg *apiConfig) handlerValidate(w http.ResponseWriter, r *http.Request) {
@@ -35,14 +33,3 @@ func (cfg *apiConfig) handlerValidate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func replaceProfanities(text string) string {
-	profanities := []string{"kerfuffle", "sharbert", "fornax"}
-	words := strings.Split(text, " ")
-	for i, word := range words {
-		lowerWord := strings.ToLower(word)
-		if slices.Contains(profanities, lowerWord) {
-			words[i] = "****"	
-		}	
-	}
-	return strings.Join(words, " ")
-}
