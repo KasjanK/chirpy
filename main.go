@@ -13,6 +13,7 @@ import (
 )
 
 type apiConfig struct {
+	platform 		string	
 	db 				*database.Queries
 	fileserverHits 	atomic.Int32
 }
@@ -26,6 +27,7 @@ func main() {
 	}
 	dbQueries := database.New(db)
 
+	platform := os.Getenv("PLATFORM")
 	serveMux := http.NewServeMux()
 	server := &http.Server{
 		Handler: serveMux,
@@ -33,6 +35,7 @@ func main() {
 	}
 
 	apiCfg := apiConfig{
+		platform: platform,
 		db: dbQueries,
 		fileserverHits: atomic.Int32{},
 	}
@@ -42,6 +45,7 @@ func main() {
 	serveMux.HandleFunc("GET /api/healthz", handlerReadiness)
 	serveMux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	serveMux.HandleFunc("POST /api/validate_chirp", apiCfg.handlerValidate)
+	serveMux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	log.Fatal(server.ListenAndServe())
 }
