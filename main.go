@@ -13,6 +13,7 @@ import (
 )
 
 type apiConfig struct {
+	secret			string
 	platform 		string	
 	db 				*database.Queries
 	fileserverHits 	atomic.Int32
@@ -28,6 +29,7 @@ func main() {
 	dbQueries := database.New(db)
 
 	platform := os.Getenv("PLATFORM")
+	secret := os.Getenv("SECRET")
 	serveMux := http.NewServeMux()
 	server := &http.Server{
 		Handler: serveMux,
@@ -35,6 +37,7 @@ func main() {
 	}
 
 	apiCfg := apiConfig{
+		secret:   secret,
 		platform: platform,
 		db: dbQueries,
 		fileserverHits: atomic.Int32{},

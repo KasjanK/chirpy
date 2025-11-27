@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KasjanK/chirpy/internal/auth"
 	"github.com/KasjanK/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -22,16 +23,24 @@ type Chirp struct {
 func (cfg apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body   string 	 `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
 	}
 
-	type response struct {
-		Chirp
+
+	bearerToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not find JWT", err)
+		return
+	}
+
+	id, err := auth.ValidateJWT(bearerToken, cfg.secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Could not validate JWT", err)
+		return
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not decode parameters", err)
 		return
@@ -46,21 +55,20 @@ func (cfg apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) 
 
 	chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
 			Body: cleanBody,
-			UserID: params.UserID,
+			UserID: id,
 		})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not create chirp", err)
 	}
 
-	respondWithJSON(w, http.StatusCreated, response{
-		Chirp: Chirp{
-			ID: chirp.ID,
-			CreatedAt: chirp.CreatedAt,
-			UpdatedAt: chirp.UpdatedAt,
-			Body: cleanBody,
-			UserID: chirp.UserID,
-		},
-	})
+	respondWithJSON(w, http.StatusCreated, Chirp{
+		ID: chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body: cleanBody,
+		UserID: chirp.UserID,
+	},
+)
 }
 
 func replaceProfanities(text string) string {
