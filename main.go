@@ -55,6 +55,7 @@ func main() {
 	serveMux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	serveMux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
 	serveMux.HandleFunc("PUT /api/users", apiCfg.handlerUpdateUser)
+	serveMux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.handlerDeleteChirp)
 
 	log.Fatal(server.ListenAndServe())
 }
