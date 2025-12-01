@@ -55,7 +55,6 @@ func (cfg apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		Token: refreshToken,
 		UserID: user.ID,
 	})
-
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not store refresh token in db", err)
 		return

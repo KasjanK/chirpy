@@ -7,13 +7,13 @@ import (
 )
 
 func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
-	bearerToken, err := auth.GetBearerToken(r.Header)
+	refreshToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not get JWT", err)
 		return
 	}
 	 
-	_, err = cfg.db.RevokeRefreshTokenByToken(r.Context(), bearerToken)
+	_, err = cfg.db.RevokeRefreshTokenByToken(r.Context(), refreshToken)
 	if err != nil {
 		respondWithError(w,http.StatusInternalServerError, "Could not revoke token", err)
 		return
