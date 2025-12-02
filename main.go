@@ -13,6 +13,7 @@ import (
 )
 
 type apiConfig struct {
+	polkaKey		string
 	secret			string
 	platform 		string	
 	db 				*database.Queries
@@ -30,6 +31,7 @@ func main() {
 
 	platform := os.Getenv("PLATFORM")
 	secret := os.Getenv("SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 	serveMux := http.NewServeMux()
 	server := &http.Server{
 		Handler: serveMux,
@@ -37,6 +39,7 @@ func main() {
 	}
 
 	apiCfg := apiConfig{
+		polkaKey: polkaKey,
 		secret:   secret,
 		platform: platform,
 		db: dbQueries,
